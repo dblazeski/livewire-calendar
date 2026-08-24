@@ -4,11 +4,10 @@ namespace Asantibanez\LivewireCalendar\Tests;
 
 use Asantibanez\LivewireCalendar\LivewireCalendar;
 use Livewire\LivewireManager;
-use Livewire\Testing\TestableLivewire;
 
 class LivewireCalendarTest extends TestCase
 {
-    private function createComponent($parameters = []): TestableLivewire
+    private function createComponent(array $parameters = [])
     {
         return app(LivewireManager::class)->test(LivewireCalendar::class, $parameters);
     }
