@@ -1,0 +1,65 @@
+name: PayTheNanny Composer sandbox
+
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout sandbox
+        uses: actions/checkout@v4
+
+      - name: Setup PHP and Composer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, calendar, exif, gd, imagick, intl, pcntl, pdo_mysql, pdo_pgsql, redis, soap, sodium, sockets, zip
+          coverage: none
+          tools: composer:v2
+          ini-values: memory_limit=2G
+
+      - name: Configure Composer authentication
+        run: composer config --global github-oauth.github.com "${{ github.token }}"
+
+      - name: Resolve dependencies
+        working-directory: ptn-sandbox
+        env:
+          COMPOSER_ALLOW_SUPERUSER: '1'
+        run: |
+          composer update \
+            --with-all-dependencies \
+            --no-install \
+            --no-scripts \
+            --no-interaction \
+            --no-progress \
+            --prefer-dist \
+            --ignore-platform-req=ext-sodium
+
+      - name: Validate lock
+        working-directory: ptn-sandbox
+        run: |
+          composer validate --no-check-publish | tee composer-validate.txt
+          composer show --locked --direct | tee composer-versions.txt
+          php -r '$lock=json_decode(file_get_contents("composer.lock"), true, 512, JSON_THROW_ON_ERROR); $packages=array_column(array_merge($lock["packages"], $lock["packages-dev"]), "version", "name"); foreach (["laravel/framework"=>"13.", "laravel/tinker"=>"3.", "rappasoft/laravel-authentication-log"=>"6.", "laravel-notification-channels/fcm"=>"6.", "torann/geoip"=>"3.0.10", "fruitcake/laravel-debugbar"=>"4.", "spatie/geocoder"=>"4."] as $name=>$expected) { $version=ltrim($packages[$name] ?? "", "v"); if (!str_starts_with($version, $expected)) { fwrite(STDERR, "$name resolved to ".($packages[$name] ?? "missing").PHP_EOL); exit(1); } echo "$name ".$packages[$name].PHP_EOL; }' | tee composer-required-versions.txt
+          sha256sum composer.lock | tee composer-lock.sha256
+
+      - name: Upload lock artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: paythenanny-composer-lock
+          path: |
+            ptn-sandbox/composer.lock
+            ptn-sandbox/composer-validate.txt
+            ptn-sandbox/composer-versions.txt
+            ptn-sandbox/composer-required-versions.txt
+            ptn-sandbox/composer-lock.sha256
+          if-no-files-found: error
+          retention-days: 1
