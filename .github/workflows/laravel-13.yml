@@ -28,4 +28,4 @@ jobs:
         run: composer validate --strict
 
       - name: Run tests
-        run: vendor/bin/phpunit --fail-on-empty-test-suite --display-phpunit-deprecations
+        run: vendor/bin/phpunit --configuration phpunit.laravel13.xml --fail-on-empty-test-suite --display-phpunit-deprecations
