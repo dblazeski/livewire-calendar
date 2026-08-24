@@ -34,7 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           curl --fail --location --retry 3 \
-            'https://raw.githubusercontent.com/caresies-io/paythenanny/upgrade/laravel-13/composer.lock?token=AAFX6GJXYCKTQW6ANMNNIYTKRP4ULAA' \
+            'https://raw.githubusercontent.com/caresies-io/paythenanny/upgrade/laravel-13/composer.lock?token=AAFX6GNVKFHGND7VWM2IHRLKRQQGLAA' \
             --output ptn-sandbox/composer.lock
           test "$(git hash-object ptn-sandbox/composer.lock)" = 'ffd5cd8ea1f902f62c87c7923baba4ac5d74a081'
 
