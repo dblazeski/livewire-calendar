@@ -1,0 +1,31 @@
+name: Laravel 13 compatibility
+
+on:
+  push:
+    branches:
+      - laravel-13
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          tools: composer
+
+      - name: Install Laravel 13 test dependencies
+        run: |
+          composer require --dev 'orchestra/testbench:^11.0' 'phpunit/phpunit:^12.0' --with-all-dependencies --no-interaction --no-progress
+
+      - name: Validate package
+        run: composer validate --strict
+
+      - name: Run tests
+        run: vendor/bin/phpunit --configuration phpunit.laravel13.xml --fail-on-empty-test-suite --display-phpunit-deprecations
