@@ -8,33 +8,24 @@ use Livewire\Testing\TestableLivewire;
 
 class LivewireCalendarTest extends TestCase
 {
-    private function createComponent($parameters = []) : TestableLivewire
+    private function createComponent($parameters = []): TestableLivewire
     {
         return app(LivewireManager::class)->test(LivewireCalendar::class, $parameters);
     }
 
-    /** @test */
-    public function can_build_component()
+    public function test_can_build_component(): void
     {
-        //Arrange
-
-        //Act
         $component = $this->createComponent([]);
 
-        //Assert
         $this->assertNotNull($component);
     }
 
-    /** @test */
-    public function can_navigate_to_next_month()
+    public function test_can_navigate_to_next_month(): void
     {
-        //Arrange
         $component = $this->createComponent([]);
 
-        //Act
         $component->runAction('goToNextMonth');
 
-        //Assert
         $this->assertEquals(
             today()->startOfMonth()->addMonthNoOverflow(),
             $component->get('startsAt')
@@ -46,16 +37,12 @@ class LivewireCalendarTest extends TestCase
         );
     }
 
-    /** @test */
-    public function can_navigate_to_previous_month()
+    public function test_can_navigate_to_previous_month(): void
     {
-        //Arrange
         $component = $this->createComponent([]);
 
-        //Act
         $component->runAction('goToPreviousMonth');
 
-        //Assert
         $this->assertEquals(
             today()->startOfMonth()->subMonthNoOverflow(),
             $component->get('startsAt')
@@ -67,20 +54,16 @@ class LivewireCalendarTest extends TestCase
         );
     }
 
-    /** @test */
-    public function can_navigate_to_current_month()
+    public function test_can_navigate_to_current_month(): void
     {
-        //Arrange
         $component = $this->createComponent([]);
 
         $component->runAction('goToPreviousMonth');
         $component->runAction('goToPreviousMonth');
         $component->runAction('goToPreviousMonth');
 
-        //Act
         $component->runAction('goToCurrentMonth');
 
-        //Assert
         $this->assertEquals(
             today()->startOfMonth(),
             $component->get('startsAt')
