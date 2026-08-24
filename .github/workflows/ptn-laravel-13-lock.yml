@@ -1,0 +1,78 @@
+name: PayTheNanny Laravel 13 lock sandbox
+
+on:
+  push:
+    branches:
+      - automation/ptn-laravel-13-lock
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout sandbox
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          tools: composer
+          ini-values: memory_limit=2G
+
+      - name: Download and verify PayTheNanny base lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            'https://raw.githubusercontent.com/caresies-io/paythenanny/upgrade/laravel-13/composer.lock?token=AAFX6GJXYCKTQW6ANMNNIYTKRP4ULAA' \
+            --output ptn-sandbox/composer.lock
+          test "$(git hash-object ptn-sandbox/composer.lock)" = 'ffd5cd8ea1f902f62c87c7923baba4ac5d74a081'
+
+      - name: Configure Composer GitHub authentication
+        run: composer config --global github-oauth.github.com "${{ github.token }}"
+
+      - name: Resolve approved Laravel 13 dependencies
+        working-directory: ptn-sandbox
+        run: |
+          composer update \
+            laravel/framework \
+            laravel/tinker \
+            asantibanez/livewire-calendar \
+            filament/filament \
+            filament/forms \
+            filament/tables \
+            laravel-notification-channels/fcm \
+            rappasoft/laravel-authentication-log \
+            torann/geoip \
+            fruitcake/laravel-debugbar \
+            spatie/geocoder \
+            --with-all-dependencies \
+            --no-scripts \
+            --no-interaction \
+            --prefer-dist
+
+      - name: Validate resolved lock
+        working-directory: ptn-sandbox
+        run: |
+          composer validate --no-check-publish | tee composer-validate.txt
+          composer show --locked --direct | tee composer-direct-versions.txt
+          sha256sum composer.lock | tee composer-lock.sha256
+
+      - name: Upload resolved lock
+        uses: actions/upload-artifact@v4
+        with:
+          name: paythenanny-laravel-13-lock
+          path: |
+            ptn-sandbox/composer.lock
+            ptn-sandbox/composer-validate.txt
+            ptn-sandbox/composer-direct-versions.txt
+            ptn-sandbox/composer-lock.sha256
+          if-no-files-found: error
+          retention-days: 1
